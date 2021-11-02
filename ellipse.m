@@ -139,6 +139,7 @@ for k=1:maxk
 %  y=radm*cos(the)*si+co*radn*sin(the)+ypos;
   p=line(radm*cos(the)*co-si*radn*sin(the)+xpos,radm*cos(the)*si+co*radn*sin(the)+ypos);
   set(p,'color',C(rem(k-1,size(C,1))+1,:));
+  set(p,'linewidth',1.5);
   
   if nargout > 0
     h(k)=p;

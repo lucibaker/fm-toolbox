@@ -1,4 +1,4 @@
- function [q_at_p,valid_frac] = interp_q_at_p_aniso(xp,yp,r1,r2,theta_p,xf,yf,q,dmin,sigma,theta_cut)
+ function [dqdx,dqdy,valid_frac] = gradient_q_at_p_aniso(xp,yp,r1,r2,theta_p,xf,yf,q,dmin,sigma,theta_cut)
 % interpolate fluid quantity q at anisotropic particle location xp, yp 
 % using method in Schneiders et al. 2019 (approximates particles as ellipsoids)
 %
@@ -10,7 +10,7 @@
 % dmin: offset of interpolation band from particle
 % sigma: width of interp. band
 % theta_cut: cutoff angle above and below horz. axis of downwind portion of interp. band [rad]
-% q_at_p: q interpolated at particle location (scalar)
+% dqdx, dqdy: gradient of q at particle location in x and y directions (scalar)
 % valid_frac: fraction of vectors in interp. band that were valid
 
 if all(isreal([r1 r2 theta_p]))
@@ -31,44 +31,44 @@ if all(isreal([r1 r2 theta_p]))
     bound3 = abs(atan2(yf-yp, xf-xp));
     idx = logical(bound1 > 0 & bound2 < 0 & bound3 > theta_cut);
 
-    q_n = q(idx);
-
-    % % Gaussian weighting function
-    % rp_x = sqrt(bound1 + 1) - 1; % distance from particle boundary (currently wrong)
-    % G = exp(-18*(rp_x/2 - (dmin + sigma/2)).^2/sigma^2);
-    % q_n = q_n.*G(idx);
-
-    % average over interpolation band
-    q_at_p = nanmean(q_n(:));
+    q_n = q;
+    q_n(~idx) = nan;
+    
+    % take gradients within interpolation band
+    [dqdx_n,dqdy_n] = gradient(q_n,dxf);
+    dqdx = nanmean(dqdx_n(:));
+    dqdy = nanmean(dqdy_n(:));
 
     % valid fraction
     valid_frac = sum(~isnan(q_n(:)))/sum(idx(:));
     if valid_frac == 0
-        q_at_p = nan;
+        dqdx = nan;
+        dqdy = nan;
     end
 
-    % plot
-    r = 4;
-    plot_lims = [xp-r*(r1+dmin+sigma), xp+r*(r1+dmin+sigma), yp-r*(r1+dmin+sigma), yp+r*(r1+dmin+sigma)];
-    plot_idx_x = xf(1,:) > plot_lims(1) & xf(1,:) < plot_lims(2);
-    plot_idx_y = yf(:,1) > plot_lims(3) & yf(:,1) < plot_lims(4);
-    contourf(xf(plot_idx_y,plot_idx_x),yf(plot_idx_y,plot_idx_x),q(plot_idx_y,plot_idx_x),20,'edgecolor','none'); colormap jet; hold on
-    quiver(xf(plot_idx_y,plot_idx_x),yf(plot_idx_y,plot_idx_x),q(plot_idx_y,plot_idx_x),zeros(size(q(plot_idx_y,plot_idx_x))),0.4,'color','k')
-    ellipse(r1,r2,theta_p,xp,yp,'w');
-    ellipse(r1+dmin,r2+dmin,theta_p,xp,yp,'w');
-    ellipse(r1+dmin+sigma,r2+dmin+sigma,theta_p,xp,yp,'w');
+%     % plot
+%     r = 4;
+%     plot_lims = [xp-r*(r1+dmin+sigma), xp+r*(r1+dmin+sigma), yp-r*(r1+dmin+sigma), yp+r*(r1+dmin+sigma)];
+%     plot_idx_x = xf(1,:) > plot_lims(1) & xf(1,:) < plot_lims(2);
+%     plot_idx_y = yf(:,1) > plot_lims(3) & yf(:,1) < plot_lims(4);
+%     contourf(xf(plot_idx_y,plot_idx_x),yf(plot_idx_y,plot_idx_x),q(plot_idx_y,plot_idx_x),20,'edgecolor','none'); colormap jet; hold on
+%     quiver(xf,yf,q,zeros(size(q)))
+%     ellipse(r1,r2,theta_p,xp,yp,'k');
+%     ellipse(r1+dmin,r2+dmin,theta_p,xp,yp,'k');
+%     ellipse(r1+dmin+sigma,r2+dmin+sigma,theta_p,xp,yp,'k');
 %     line([xp xp+r1+dmin+sigma],[yp yp+tan(theta_cut)*(r1+dmin+sigma)],'color','k')
 %     line([xp xp+r1+dmin+sigma],[yp yp-tan(theta_cut)*(r1+dmin+sigma)],'color','k')
-    axis(plot_lims); axis tight equal; set(gca,'XTick',[]); set(gca,'YTick',[]);
+%     axis equal; axis(plot_lims); 
 %     c = colorbar; c.Label.String = 'u [m/s]';
-    goodplot([5 4]);
-    hold off
-    keyboard
+%     goodplot([5 4]);
+%     hold off
+%     keyboard
     
 else
     % in case of imaginary r1, r2, theta_p
     valid_frac = nan;
-    q_at_p = nan;
+    dqdx = nan;
+    dqdy = nan;
 end
 
 end

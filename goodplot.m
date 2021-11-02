@@ -4,7 +4,7 @@ function goodplot(papersize)
 f = gcf;
 
 fontsize = 9; 
-margin = 0.5;
+margin = 0;
 intrp = 'latex';  % 'tex'; % 
 % fnt = 'Times';
 
@@ -14,10 +14,12 @@ for i = 1:length(h)
     set(h(i),'FontSize',fontsize);
     set(get(h(i),'xlabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
     set(get(h(i),'ylabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
+    set(get(h(i),'zlabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
     set(get(h(i),'title'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
     set(h(i),'ticklength',2*[0.0100 0.0250]);
     set(h(i),'TickLabelInterpreter',intrp); %, 'FontName', fnt)
     set(h(i),'Box','on');
+    %set(h(i),'ActivePositionProperty','outerposition');
 end
 
 % legend
