@@ -4,7 +4,7 @@ function goodplot(papersize)
 f = gcf;
 
 fontsize = 9; 
-margin = 0;
+margin = 0.5;
 intrp = 'latex';  % 'tex'; % 
 % fnt = 'Times';
 
