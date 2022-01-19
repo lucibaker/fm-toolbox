@@ -1,15 +1,15 @@
 % bmp series to movie file (gif or avi)
 
-fmt = 'gif'; % format option: 'gif' or 'avi'
+fmt = 'avi'; % format option: 'gif' or 'avi'
 
-mname = 'rods_hiRe_short'; % movie file name 
-bname = 'images/run_a_'; % base .bmp file name
-i0 = 100580; %403480; %206470; % starting frame 
-N = 300;  % number of frames
+mname = 'test_nurdles_raw'; % movie file name 
+bname = 'Basler_acA2040-90um__23703425__20220113_100116310_'; % base .bmp file name
+i0 = 1200;  % starting frame 
+N = 100;  % number of frames
 
 if strcmp(fmt,'avi')
     v = VideoWriter(mname,'Grayscale AVI');
-    v.FrameRate = 5;
+    v.FrameRate = 10;
     open(v)
 elseif strcmp(fmt,'gif')
 else
@@ -17,7 +17,7 @@ else
 end
 
 for i = i0:(i0 + N) 
-    A = imread([bname num2str(i) '.bmp']); % '_Cam_9992_Cine1.bmp']);
+    A = imread(sprintf('%s%04i.tiff',bname, i)); 
     if strcmp(fmt,'avi')
         % write to video
         writeVideo(v,A);
