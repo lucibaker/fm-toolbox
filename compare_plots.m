@@ -35,10 +35,18 @@ end
 % plot error bars
 for i = 1:N
     if any(~isnan(w_u{i}))
-        errorbar(u{i},y{i},w_u{i},'horizontal','.','color',c_w_u{i},'CapSize',2,'linewidth',0.5); hold on
+        patch = fill([u{i}(:)+w_u{i}(:); flipud(u{i}(:)-w_u{i}(:))], [y{i}(:); flipud(y{i}(:))], c_w_u{i});
+        set(patch, 'edgecolor', 'none');
+        set(patch, 'FaceAlpha', 0.15);
+%         errorbar(u{i},y{i},w_u{i},'horizontal','.','color',c_w_u{i},'CapSize',2,'linewidth',0.5); 
+        hold on
     end
     if any(~isnan(w_y{i}))
-        errorbar(u{i},y{i},w_y{i},'vertical','.','color',c_w_y{i},'CapSize',2,'linewidth',0.5); hold on
+        patch = fill([u{i}(:); flipud(u{i}(:))], [y{i}(:)+w_y{i}(:); flipud(y{i}(:)-w_y{i}(:))], c_w_y{i});
+        set(patch, 'edgecolor', 'none');
+        set(patch, 'FaceAlpha', 0.15);
+%         errorbar(u{i},y{i},w_y{i},'vertical','.','color',c_w_y{i},'CapSize',2,'linewidth',0.5); 
+        hold on
     end
 end
 

@@ -1,6 +1,6 @@
-function [smtracks,smtracklength] = ptvProcess(h,centers,kernel,pxtom,fs,searchrad,piv_predict,varargin)
-% Track particles using kNN search and an optional PIV predictor
-% (using pivio, not dir)
+function [smtracks,smtracklength] = ptvProcess2(centers,kernel,pxtom,fs,searchrad,varargin)
+% Track particles using kNN search. No PIV predictor
+% (using dir, not pivio)
 %
 % Inputs:
 % h: PIV header
@@ -10,8 +10,6 @@ function [smtracks,smtracklength] = ptvProcess(h,centers,kernel,pxtom,fs,searchr
 % pxtom: meters/pixel
 % fs: sampling frequency of particle centroids
 % searchrad: search radius [m]
-% piv_predict: set to 1 to use PIV predictor field, 0 to use PIV predictor value, 
-%   -1 to not use a PIV predictor
 % (optional) angles:  cell array containing the orientation information of 
 %   the particle centroids, one cell per frame
 %
@@ -25,46 +23,16 @@ else
     angles = cell(size(centers));
 end
 
-snapshots = cell(h.nt,1); 
-for i = 1:h.nt 
-    snapshots{i} = [centers{i}*pxtom zeros(size(centers{i},1),4) angles{i}];
-end
+img_nt = length(centers);
 
-% PIV predictor field
-if piv_predict >= 0
-    N = 100; % # of frames to use
-    u_mean = zeros(h.ny, h.nx, N);
-    v_mean = zeros(h.ny, h.nx, N);
-    n = round(linspace(0,h.nt-1,N)); 
-    for i = 1:N
-        data = pivGetFrame(h,n(i));
-        u_mean(:,:,i) = data{2};
-        v_mean(:,:,i) = data{3};
-    end
-end
-if piv_predict == 1   % mean velocity FIELD
-    u_mean = flipud(nanmean(u_mean,3))*pxtom*fs;  
-    v_mean = -flipud(nanmean(v_mean,3))*pxtom*fs;
-elseif piv_predict == 0   % mean velocity SCALAR VALUE
-    u_mean = nanmean(u_mean(:))*ones(size(u_mean))*pxtom*fs;
-    v_mean = nanmean(v_mean(:))*ones(size(v_mean))*pxtom*fs;
-elseif piv_predict == -1   % NO mean velocity predictor
-    u_mean = 0;
-    v_mean = 0;
-end
-if piv_predict >= 0
-    u_mean = repmat(u_mean,1,1,3);
-    v_mean = repmat(v_mean,1,1,3);
-    x = pxtom*(h.x0 : h.dx : (h.x0 + h.dx*(h.nx-1)));
-    y = pxtom*(h.y0 : h.dy : (h.y0 + h.dy*(h.ny-1)));
-    [xx,yy] = meshgrid(x,y);    
-    u_mean(:,:,2) = xx; u_mean(:,:,3) = yy;
-    v_mean(:,:,2) = xx; v_mean(:,:,3) = yy;
+snapshots = cell(img_nt,1); 
+for i = 1:img_nt 
+    snapshots{i} = [centers{i}*pxtom zeros(size(centers{i},1),4) angles{i}];
 end
 
 avar_k = zeros(length(kernel),1);
 for n = 1:length(kernel)
-    [tracks,smtracks,snapshots] = track_particles(snapshots,searchrad,kernel(n),fs,u_mean,v_mean);
+    [tracks,smtracks,snapshots] = track_particles(snapshots,searchrad,kernel(n),fs);
 
     %% View UID Particle Track and Lagrangian Stats
     filled = smtracks(~cellfun('isempty',smtracks))';

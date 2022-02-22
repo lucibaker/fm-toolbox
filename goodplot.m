@@ -3,7 +3,8 @@ function goodplot(papersize)
 % and sets up the page for nice printing
 f = gcf;
 
-fontsize = 9; 
+fontsize = 10; 
+lg_fs = 9;
 margin = 0.5;
 intrp = 'latex';  % 'tex'; % 
 % fnt = 'Times';
@@ -25,7 +26,7 @@ end
 % legend
 l = findobj(f,'Type','Legend');
 if ~isempty(l)
-    set(l,'FontSize',fontsize, 'Interpreter',intrp); %, 'FontName', fnt);
+    set(l,'FontSize',lg_fs, 'Interpreter',intrp); %, 'FontName', fnt);
 %     legendmarkeradjust(20);
 end
 
