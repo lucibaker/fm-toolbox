@@ -14,7 +14,7 @@ w = T/1.5;
 % second order derivative of Gaussian:
 t = -T:T;
 ddG = - (w^2-t.^2)/(w^5*sqrt(2*pi)) .* exp(-t.^2/(2*w^2));
-% normalize as A*ddG+B (see Tropea p. 795)
+% normalize as A*ddG+B (see Springer Handbook of Fluid Mech - Tropea p. 795)
 % using the conditions sum(A*ddG+B) = 0, sum((-T:T)^2/2*(A*ddg+B)) = 1
 A = 2/(sum(t.^2.*ddG) - 1/numel(t) * sum(ddG) * sum(t.^2));
 B = -A/numel(t) * sum(ddG);

@@ -14,7 +14,7 @@ w = T/1.5;
 % first order derivative of Gaussian:
 t = -T:T;
 dG = -t/(w^3*sqrt(2*pi)) .* exp(-t.^2/(2*w^2));
-% normalize as A*dG+B (see Tropea p. 795)
+% normalize as A*dG+B (see Springer Handbook of Fluid Mech - Tropea p. 795)
 % using the conditions sum(A*dG+B) = 0, sum(t*(A*dG+B)) = 1
 B = 0;
 A = -1/sum((-T:T).*dG);
