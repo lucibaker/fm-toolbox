@@ -1,26 +1,101 @@
-%% Particle Lagrangian Tracking
-% Creates tracks, smoothed tracks, and snapshots from particle position and
-% velocity data.
-% 
-% Uses: gauss_velocity.m - Kasey Laurent
-% Author : Kee Onn Fong(fongx065@umn.edu)
+function [tracks,tracklength] = get_particle_tracks(centers,fs,searchrad,varargin)
+% Track particles using kNN search. Previous particle displacement used as
+% predictor for next timestep.
+%
+% Inputs:
+% centers: cell array containing the coordinates of the particle centroids,
+%   one cell per frame [px]
+% kernel: smoothing kernel size
+% fs: sampling frequency of particle centroids
+% searchrad: search radius [m]
+% (optional) angles, errchk:  cell array containing the orientation and
+% error check info of the particles, one cell per frame
+%
+% Outputs:
+% smtracks: smoothed particle tracks in the format [X_m Y_m U_ms V_ms UID lifetime frameno Ax_ms2 Ay_ms2 (th_p) (d_p) (errchk)]
+% smtracklength: length of each track (# frames)
 
-function [tracks,smtracks,snapshots] = track_particles(snapshots,searchrad,kernel,fs,varargin)
-if ~isempty(varargin)
-    u_mean = varargin{1}; % PIV predictor field
-    v_mean = varargin{2};
-else
-    u_mean = 0;
-    v_mean = 0;
+img_nt = length(centers);
+
+snapshots = cell(img_nt,1); 
+for i = 1:img_nt 
+    snapshots{i} = [centers{i} zeros(size(centers{i},1),4)];
+    for j = 1:nargin - 3 
+        snapshots{i} = [snapshots{i} varargin{j}{i}];
+    end
 end
+
+% get tracks
+tracks = trackp(snapshots,searchrad,fs);
+
+% convert to array
+filled = tracks(~cellfun('isempty',tracks))';
+if isempty(filled)
+    error('no tracks found')
+end
+for i=1:length(filled)
+    UID(i,1) = mode(filled{i}(:,5));
+    UID(i,2) = length(filled{i}(:,5));
+end
+UID = sortrows(UID,2);
+UID = flipud(UID);
+
+tracklength = zeros(length(tracks),1);
+for i = 1:length(tracks)
+    tracklength(i) = size(tracks{i},1);
+end   
+filled_tracklength = tracklength(~cellfun('isempty',tracks));
+
+filled_array = zeros(0,size(filled{1},2));
+for i = 1:length(filled)
+    filled_array = [filled_array; filled{i}];
+end
+
+tracks = filled_array;
+tracklength = filled_tracklength;
+
+
+% %% repair broken tracks
+% frames_skipped = 1; % max number of frames skipped
+% for i = 1:length(tracklength)
+%     idx_fr0 = find(tracks(:,5) == i);
+%     if ~isempty(idx_fr0)
+%         endpt = tracks(idx_fr0(end),1:2);  % track endpoint
+%         pred_disp = tracks(idx_fr0(end),3:4)/fs;  % displacement prediction
+%         pred_disp(isnan(pred_disp)) = 0;
+%         endfr = tracks(idx_fr0(end),7);  % track end frame
+%         
+%         for df = 1:frames_skipped
+%             idx_fr1 = find(tracks(:,7) == endfr + df);
+%             startpts = tracks(idx_fr1,1:2);
+%             
+%             % use k-nearest neighbor search to associate ends and starts of tracks
+%             [idx,d] = knnsearch(startpts, endpt + pred_disp, 'SortIndices',true);
+%             
+%             if d(1) < (df+1)*searchrad
+%                 broken_track_id = tracks(idx_fr1(idx),5);
+%                 tracks(tracks(:,5)==broken_track_id,5) = i;
+%                 break
+%             end
+%         end
+%     end
+% end
+
+
+end
+
+
+function tracks = trackp(snapshots,searchrad,fs)
+% Creates Lagrangian tracks from particle position and velocity data.
+% Author : Kee Onn Fong (fongx065@umn.edu)
+% edited by Luci Baker (bake0616@umn.edu)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 fprintf('finding particle tracks...')
 tstart = tic;
 
 nframes = numel(snapshots);
-T = 1/fs; % T is in s
-savefile=0;
+dt = 1/fs; % T is in s
 %%%%%%%%%%%%%%%%%%%%%%%
 %% Particle UID Assigning using knnsearch
 % [X_m Y_m U_ms V_ms UID lifetime];
@@ -50,24 +125,20 @@ for i = 1:nframes-1
             count = count-1;
         end
     end
-    fA = sortrows(fA,1);%fA = fA(1:100,:);
-    fB = sortrows(fB,1);%fB = fB(1:100,:);
+    fA = sortrows(fA,1);
+    fB = sortrows(fB,1);
     [np,~]=size(fB);
     maxUIDfA = max([max(fA(:,5)),maxmaxUID]);
     maxmaxUID = maxUIDfA;
     minUIDfA = min(fA(:,5));
     fB(:,5) = ones(numel(fB(:,1)),1)*-1; %-1 is no ID assigned yet
     fB(:,6) = -1; % lifetime of particle 
-
-    % Apply PIV predictor field
-    fBshifted = fB;
-    if numel(u_mean) > 1   
-        fBshifted(:,1) = fBshifted(:,1) - T*interp2(u_mean(:,:,2),u_mean(:,:,3),u_mean(:,:,1),fBshifted(:,1),fBshifted(:,2));
-        fBshifted(:,2) = fBshifted(:,2) - T*interp2(u_mean(:,:,2),u_mean(:,:,3),v_mean(:,:,1),fBshifted(:,1),fBshifted(:,2));
-    end
     
-    %use k-nearest neighbor search to associate particles in fA and fB
-    [idx,d] = knnsearch(fA(:,1:2),fBshifted(:,1:2));
+    % predicted displacement
+    pred_disp = fA(:,3:4);  
+
+    % use k-nearest neighbor search to associate particles in fA and fB
+    [idx,d] = knnsearch(fA(:,1:2) + pred_disp, fB(:,1:2));
     
     idx = [idx,(1:np)',d];
     idx = sortrows(idx,3); idxuncut = numel(idx(:,1));
@@ -91,10 +162,8 @@ for i = 1:nframes-1
         cutted = cutted+1;
     end
     
-    %check if particle fields are time-resolved
-    if flag == 1%numel(idx(:,1))<0
-%         disp(['particle fields #',num2str(i),' and #',num2str(i+1),...
-%            ' are NOT sequential, num(idx) = ',num2str(numel(idx(:,1)))]);
+    % check if particle fields are time-resolved
+    if flag == 1
 %         assign new UID for particles in fB and new lifetime count
         maxUIDfB = maxUIDfA;
         for j=1:numel(fB(:,1))
@@ -105,16 +174,14 @@ for i = 1:nframes-1
             end
         end
     else
-        %disp(['particle fields of #',num2str(i),' and #',num2str(i+1),...
-        %    ' are sequential']);
         %associate particles in fA with itself in fB and add lifetime count
-        for j=1:numel(idx(:,1))
-%             if fB(idx(j,2),1)<fA(idx(j,1),1) %% disable backwards motion
-%                 continue;
-%             end            
+        for j=1:numel(idx(:,1))          
             UID = fA(idx(j,1),5);
             fB(idx(j,2),5) = UID;
             fB(idx(j,2),6) = fA(idx(j,1),6)+1;
+            % update displacement
+            fB(idx(j,2),3) = fB(idx(j,2),1) - fA(idx(j,1),1);
+            fB(idx(j,2),4) = fB(idx(j,2),2) - fA(idx(j,1),2);
         end
         %assign new UID for particles in fB and new lifetime count
         maxUIDfB = maxUIDfA;
@@ -130,10 +197,8 @@ for i = 1:nframes-1
     snapshots{i+1} = fB;
 end
 
-% disp('Particle UID complete')
-% toc
 
-% %% REPAIR BROKEN TRACKS
+% % REPAIR BROKEN TRACKS
 % df = 1; % max # of frames away to look for matches
 % rep_rad_x = searchrad;
 % rep_rad_y = searchrad;
@@ -192,12 +257,10 @@ end
 %     end 
 % end
 
-        
+      
+% Particle Velocity
+% calculate velocity for connected particles
 
-%% New Particle Velocity
-% recalculate velocity for connected particles
-
-% tic
 snapminUID = zeros(nframes,1);
 snapmaxUID = zeros(nframes,1);
 for i=1:nframes-1
@@ -212,8 +275,8 @@ for i=1:nframes-1
        if fB(fbx,6)>0
           UID = fB(fbx,5);
           fax = find(fA(:,5)==UID);
-          U_ms = (fB(fbx,1)-fA(fax,1))/T;
-          V_ms = (fB(fbx,2)-fA(fax,2))/T;
+          U_ms = (fB(fbx,1)-fA(fax,1))/dt;
+          V_ms = (fB(fbx,2)-fA(fax,2))/dt;
           fA(fax,3) = U_ms;
           fA(fax,4) = V_ms;
        end
@@ -232,10 +295,8 @@ else
     snapminUID(nframes) = min(snapshots{nframes}(:,5));
     snapmaxUID(nframes) = max(snapshots{nframes}(:,5));
 end
-% plot(snapminUID); hold on; plot(snapmaxUID);
-% disp('Particle Velocity Correction Complete')
-% toc
-%% Forming Particle Tracks
+
+% Forming Particle Tracks
 % Previously all particle locations are sorted by frame number, 
 % now they are going to be sorted by UID - particle tracks
 % [X_m Y_m U_ms V_ms UID lifetime frame#];
@@ -244,11 +305,10 @@ ntracks = maxUIDfB;
 tracks = cell(1,ntracks);
 notempty = ones(1,ntracks);
 
-% tic
 for i=1:ntracks
     snapmin = find(snapmaxUID>=i,1,'first');
     snapmax = find(snapminUID<=i,1,'last');
-    if snapmax < snapmin    % track is empty (only one particle)
+    if isempty(snapmax < snapmin) || snapmax < snapmin     % track is empty (only one particle)
         notempty(i) = 0;
     else
         for j=snapmin:snapmax % frame number
@@ -256,7 +316,7 @@ for i=1:ntracks
                 index = find(snapshots{j}(:,5)==i); % locate UID in frame
                 if ~isempty(index)  
                     if size(snapshots{j},2) > 6
-                        tracks{i} = vertcat(tracks{i},[snapshots{j}(index,1:6),j,snapshots{j}(index,7:8)]);
+                        tracks{i} = vertcat(tracks{i},[snapshots{j}(index,1:6),j,snapshots{j}(index,7:end)]);
                     else
                         tracks{i} = vertcat(tracks{i},[snapshots{j}(index,:),j]);
                     end
@@ -264,14 +324,14 @@ for i=1:ntracks
             end
         end
         if ~isempty(tracks{i})
-            Udot_ms2 = gradient(tracks{i}(:,3))/T;
-            Vdot_ms2 = gradient(tracks{i}(:,4))/T;
+            Udot_ms2 = gradient(tracks{i}(:,3))/dt;
+            Vdot_ms2 = gradient(tracks{i}(:,4))/dt;
         else
             Udot_ms2 = [];
             Vdot_ms2 = [];
         end
         if size(tracks{i},2) > 7
-            tracks{i} = [tracks{i}(:,1:7) Udot_ms2 Vdot_ms2 tracks{i}(:,8:9)];
+            tracks{i} = [tracks{i}(:,1:7) Udot_ms2 Vdot_ms2 tracks{i}(:,8:end)];
         else
             tracks{i} = [tracks{i} Udot_ms2 Vdot_ms2];
         end
@@ -281,67 +341,7 @@ end
 tracks = tracks(logical(notempty));  % remove empty tracks
 ntracks = length(tracks);
 
-% disp('Forming Particle Tracks Complete');
-% toc    
-
-%% Particle Velocity Smoothing and Acceleration Calculation
-% Acceleration = (U2-U1)/T in three directions 
-% Vdot_ms2 is not valid due to resolution
-% only calculated for particles with long lifetime to be meaningful
-% gauss_velocity.m is used here
-% [X_mm Y_mm U_ms V_ms UID lifetime frame# Udot_ms2 Vdot_ms2];
-
-smtracks = cell(1,ntracks);
-
-if kernel > 1
-    mintracks = kernel+3; %minimum length of tracks for smoothing (at least three points)
-    % tic
-    for i=1:ntracks
-        if length(tracks{i}(:,1))<mintracks
-            continue;
-        else
-            xx = tracks{i}(:,1);
-            yy = tracks{i}(:,2);
-            [x2, range] = gauss_position(xx',kernel);
-            [y2, ~] = gauss_position(yy',kernel);
-            [u2, ~] = gauss_velocity(xx',kernel,T);  % combo smoothing + differentiating filter
-            [v2, ~] = gauss_velocity(yy',kernel,T);
-
-            UID2 = ones(1,length(x2))*i;
-            if ~isempty(x2)
-                [Udot_ms2,~] = gauss_accel(xx',kernel,T);
-                [Vdot_ms2,~] = gauss_accel(yy',kernel,T);       
-                if size(tracks{i},2) > 9
-                    smtracks{i} = [x2',y2',u2',v2',UID2',range', ...
-                    range'+tracks{i}(1,7),Udot_ms2',Vdot_ms2',tracks{i}(range,10:11)];
-                else
-                    smtracks{i} = [x2',y2',u2',v2',UID2',range', ...
-                    range'+tracks{i}(1,7),Udot_ms2',Vdot_ms2'];
-                end
-            end
-        end
-    end
-else
-    mintracks = 1;
-    for i=1:ntracks
-        if length(tracks{i}(:,1))<mintracks
-            continue;
-        else
-            smtracks{i} = tracks{i};
-        end
-    end
-end
-
-% disp('Particle Smoothing and Acceleration Calc Complete')
-% toc
-
-%% save UID file
-if savefile
-    save([load_str,'_UID',num2str(kernel),'.mat'],'snapshots','tracks','smtracks','kernel');
-    disp('Track File Saved')
-end
-
-fprintf('done. ')
 toc(tstart)
+
 
 end

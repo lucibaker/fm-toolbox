@@ -8,7 +8,7 @@ frame.cdata = cdata; frame.colormap = [];
 im = frame2im(frame);
 [imind,cm] = rgb2ind(im,256);
 if ~exist(gif_fn,'file')
-    imwrite(imind,cm,fn_gif,'gif','Loopcount',inf,'DelayTime',delay);
+    imwrite(imind,cm,gif_fn,'gif','Loopcount',inf,'DelayTime',delay);
 else
-    imwrite(imind,cm,fn_gif,'gif','WriteMode','append','DelayTime',delay);
+    imwrite(imind,cm,gif_fn,'gif','WriteMode','append','DelayTime',delay);
 end
