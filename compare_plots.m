@@ -52,7 +52,7 @@ end
 
 % plot lines
 for i = 1:N
-    l(i) = plot(u{i},y{i},'color',c{i},'marker',mk{i},'markersize',ms(i),'linestyle',ls{i},'markerfacecolor',c{i},'linewidth',1.5); hold on
+    l(i) = plot(u{i},y{i},'color',c{i},'marker',mk{i},'markersize',ms(i),'linestyle',ls{i},'markerfacecolor',c{i},'linewidth',1); hold on
 end
 
 end

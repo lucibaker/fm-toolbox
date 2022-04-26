@@ -54,34 +54,6 @@ end
 tracks = filled_array;
 tracklength = filled_tracklength;
 
-
-% %% repair broken tracks
-% frames_skipped = 1; % max number of frames skipped
-% for i = 1:length(tracklength)
-%     idx_fr0 = find(tracks(:,5) == i);
-%     if ~isempty(idx_fr0)
-%         endpt = tracks(idx_fr0(end),1:2);  % track endpoint
-%         pred_disp = tracks(idx_fr0(end),3:4)/fs;  % displacement prediction
-%         pred_disp(isnan(pred_disp)) = 0;
-%         endfr = tracks(idx_fr0(end),7);  % track end frame
-%         
-%         for df = 1:frames_skipped
-%             idx_fr1 = find(tracks(:,7) == endfr + df);
-%             startpts = tracks(idx_fr1,1:2);
-%             
-%             % use k-nearest neighbor search to associate ends and starts of tracks
-%             [idx,d] = knnsearch(startpts, endpt + pred_disp, 'SortIndices',true);
-%             
-%             if d(1) < (df+1)*searchrad
-%                 broken_track_id = tracks(idx_fr1(idx),5);
-%                 tracks(tracks(:,5)==broken_track_id,5) = i;
-%                 break
-%             end
-%         end
-%     end
-% end
-
-
 end
 
 
@@ -92,7 +64,7 @@ function tracks = trackp(snapshots,searchrad,fs)
 
 %%%%%%%%%%%%%%%%%%%%%%%
 fprintf('finding particle tracks...')
-tstart = tic;
+% tstart = tic;
 
 nframes = numel(snapshots);
 dt = 1/fs; % T is in s
@@ -198,66 +170,6 @@ for i = 1:nframes-1
 end
 
 
-% % REPAIR BROKEN TRACKS
-% df = 1; % max # of frames away to look for matches
-% rep_rad_x = searchrad;
-% rep_rad_y = searchrad;
-% 
-% for i = 1:nframes-1
-%     uid_f1 = snapshots{i}(:,5); % UID's in frame i
-%     uid_f2 = snapshots{i+1}(:,5); % UID's in frame i+1
-%     endpts = logical(~ismember(uid_f1,uid_f2)); % tracks that end in frame i
-%     if any(endpts)
-%         x_end = snapshots{i}(endpts,1); % x,y-coords of track endpoints
-%         y_end = snapshots{i}(endpts,2); 
-%         uid_end = snapshots{i}(endpts,5); 
-%         lt_end = snapshots{i}(endpts,6); 
-%         
-%         for j = 2:(df+1)
-%             startpts = logical(snapshots{i+j}(:,6) == 0);
-%             if any(startpts)
-%                 x_start = snapshots{i+j}(startpts,1); % x,y-coords of nearby track startpoints
-%                 y_start = snapshots{i+j}(startpts,2); 
-%                 uid_start = snapshots{i+j}(startpts,5); 
-%                 
-%                 matches = zeros(length(x_end),length(x_start));
-%                 for k = 1:length(x_end)
-%                     dist_x = x_start - x_end(k);
-%                     dist_y = y_start - y_end(k);
-%                     shift_x = j*T*interp2(u_mean(:,:,2),u_mean(:,:,3),u_mean(:,:,1),x_end(k),y_end(k));
-%                     shift_y = j*T*interp2(u_mean(:,:,2),u_mean(:,:,3),v_mean(:,:,1),x_end(k),y_end(k));
-%                     matches(k,:) = abs(dist_x - shift_x) < j*rep_rad_x & abs(dist_y - shift_y) < j*rep_rad_y;
-%                 end
-% 
-%                 if any(matches)
-%                     for k = 1:length(x_end)
-%                         uid_start0 = uid_start(logical(matches(k,:))); % track(s) that are connected to track k ending in frame i
-%                         % test if only 1 new track matches with track k, and
-%                         % that new track only has one backward match which is track k
-%                         if length(uid_start0) == 1 && sum(matches(:,logical(matches(k,:)))) == 1
-%                             % attach tracks
-%                             iter = 1;
-%                             for m = (i+1):(i+j-1)
-%                                 snapshots{m} = [snapshots{m}; zeros(1, size(snapshots{m},2))];
-%                                 snapshots{m}(end,1) = nan; snapshots{m}(end,2) = nan; % filled centroids assigned NaN's for now
-%                                 snapshots{m}(end,5) = uid_end(k);
-%                                 snapshots{m}(end,6) = lt_end(k) + iter;
-%                                 iter = iter + 1;
-%                             end
-%                             for m = (i+j):min([(i+300),nframes])
-%                                 idx_snap = logical(snapshots{m}(:,5) == uid_start0);
-%                                 snapshots{m}(idx_snap,5) = uid_end(k);
-%                                 snapshots{m}(idx_snap,6) = snapshots{m}(idx_snap,6) + lt_end(k) + 1 + j;
-%                             end
-%                         end
-%                     end
-%                 end
-%             end
-%         end
-%     end 
-% end
-
-      
 % Particle Velocity
 % calculate velocity for connected particles
 
@@ -341,7 +253,7 @@ end
 tracks = tracks(logical(notempty));  % remove empty tracks
 ntracks = length(tracks);
 
-toc(tstart)
+% toc(tstart)
 
 
 end

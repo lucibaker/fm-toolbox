@@ -19,7 +19,7 @@ a_cond = zeros(nbins,1);
 N = zeros(nbins,1);
 for n = 1:nbins
     idx = b>b_bins(n) & b<b_bins(n+1);
-    a_cond(n) = nanmean(a(idx));
+    a_cond(n) = mean(a(idx),'omitnan');
     N(n) = sum(idx);
 end
 b_centers = b_bins(2:end)-diff(b_bins)/2;
