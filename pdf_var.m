@@ -15,7 +15,7 @@ end
 
 % define bin edges
 if scaleflag
-    q_range = logspace(log10(qlims(1)),log10(qlims(2)),res+1);
+    q_range = real(logspace(log10(qlims(1)),log10(qlims(2)),res+1));
 else
     q_range = linspace(qlims(1),qlims(2),res+1);
 end

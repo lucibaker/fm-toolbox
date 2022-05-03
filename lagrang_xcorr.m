@@ -19,8 +19,8 @@ N_bins = length(y_bins) - 1;
 
 %% positive lags
 % lagrangian mean velocity for each bin
-[u_lmean_bin_p, ~, ~] = lagrang_mean(smtracks, q1, y_bins, y0m, Tmax, fs, 1);
-[v_lmean_bin_p, ~, ~] = lagrang_mean(smtracks, q2, y_bins, y0m, Tmax, fs, 1);
+% [u_lmean_bin_p, ~, ~] = lagrang_mean(smtracks, q1, y_bins, y0m, Tmax, fs, 1);
+% [v_lmean_bin_p, ~, ~] = lagrang_mean(smtracks, q2, y_bins, y0m, Tmax, fs, 1);
 
 % lagrangian autocorrelation for each bin
 r_p = zeros(N_bins,Tmax);
@@ -38,8 +38,8 @@ for j = 1:N_bins
             if ~isempty(inbin) % if track i is in bin j
                 for k = 1:length(inbin)
                     % calculate autocorrelation of [u of track i] - [lagrangian mean velocity of bin j]
-                    ufluct = smtracks(idx(inbin(k):end),q1)' - u_lmean_bin_p(j,1:length(idx(inbin(k):end)));
-                    vfluct = smtracks(idx(inbin(k):end),q2)' - v_lmean_bin_p(j,1:length(idx(inbin(k):end)));
+                    ufluct = smtracks(idx(inbin(k):end),q1)';% - u_lmean_bin_p(j,1:length(idx(inbin(k):end)));
+                    vfluct = smtracks(idx(inbin(k):end),q2)';% - v_lmean_bin_p(j,1:length(idx(inbin(k):end)));
                     r_num = ufluct(1)*vfluct;  % numerator of correlation coefficient
                     r_den1 = ufluct(1);     % first term of denominator
                     r_den2 = vfluct;        % second term of denominator
@@ -64,8 +64,8 @@ if pn
     
     %% negative lags
     % lagrangian mean velocity for each bin
-    [u_lmean_bin_n, ~, ~] = lagrang_mean(smtracks, q1, y_bins, y0m, Tmax, fs, -1);
-    [v_lmean_bin_n, ~, ~] = lagrang_mean(smtracks, q2, y_bins, y0m, Tmax, fs, -1);
+%     [u_lmean_bin_n, ~, ~] = lagrang_mean(smtracks, q1, y_bins, y0m, Tmax, fs, -1);
+%     [v_lmean_bin_n, ~, ~] = lagrang_mean(smtracks, q2, y_bins, y0m, Tmax, fs, -1);
 
     % lagrangian autocorrelation for each bin
     r_n = zeros(N_bins,Tmax);
@@ -83,8 +83,8 @@ if pn
                 if ~isempty(inbin)
                     for k = 1:length(inbin)
                         % calculate autocorrelation of [u of track i] - [lagrangian mean velocity of bin j]
-                        ufluct = smtracks(idx(inbin(k):end),q1)' - u_lmean_bin_n(j,end-length(idx(inbin(k):end))+1:end);
-                        vfluct = smtracks(idx(inbin(k):end),q2)' - v_lmean_bin_n(j,end-length(idx(inbin(k):end))+1:end); 
+                        ufluct = smtracks(idx(inbin(k):end),q1)';% - u_lmean_bin_n(j,end-length(idx(inbin(k):end))+1:end);
+                        vfluct = smtracks(idx(inbin(k):end),q2)';% - v_lmean_bin_n(j,end-length(idx(inbin(k):end))+1:end); 
                         r_num = ufluct(end)*vfluct(end:-1:1);  % numerator of correlation coefficient
                         r_den1 = ufluct(end);     % first term of denominator
                         r_den2 = vfluct(end:-1:1);        % second term of denominator
