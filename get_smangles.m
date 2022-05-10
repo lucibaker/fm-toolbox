@@ -9,14 +9,12 @@ if strncmp(particle_type,'r',1)
     th0r = tracks0(:,10);
     lr = tracks0(:,11);
 
-    % cdfs of l
-    [N_lr,edges_lr] = histcounts(lr,200,'Normalization','cdf');
-    
     % subtract 1st-percentile l_r, scaled by rod angle
+    [N_lr,edges_lr] = histcounts(lr,200,'Normalization','cdf'); 
     del_lr = edges_lr(find(N_lr>.01,1)+1);  %min(lr); % [m]
     lr_shifted = max([(lr-del_lr.*(Dp-lr)/(Dp)), zeros(size(lr))],[],2);
     
-    % plot
+    % plot lr histogram
     [lr_pdf,lr_range] = pdf_var(lr*1000,100,0);
     [lr_pdf2,lr_range2] = pdf_var(lr_shifted*1000,100,0);
     figure; plot(lr_range,lr_pdf,'k.-',lr_range2,lr_pdf2,'r.-')
@@ -37,14 +35,12 @@ else
     th0primer = tracks0(:,10);
     dr = tracks0(:,11);
 
-    % cdfs of d
-    [N_dr,edges_dr] = histcounts(dr,200,'Normalization','cdf');
-    
     % subtract 1st-percentile d_r, scaled by disk angle
+    [N_dr,edges_dr] = histcounts(dr,200,'Normalization','cdf');
     del_dr = edges_dr(find(N_dr>.01,1)+1);  %min(dr);
     dr_shifted = max([(dr - del_dr.*(Dp-dr)/(Dp)), zeros(size(dr))],[],2);
     
-    % plot
+    % plot dr histogram
     [dr_pdf,dr_range] = pdf_var(dr*1000,100,0);
     [dr_pdf2,dr_range2] = pdf_var(dr_shifted*1000,100,0);
     figure; plot(dr_range,dr_pdf,'k.-',dr_range2,dr_pdf2,'r.-')

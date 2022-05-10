@@ -11,7 +11,7 @@ else
 end
 
 if scaleflag
-    b_bins = logspace(log10(blims(1)),log10(blims(2)),nbins+1);
+    b_bins = real(logspace(log10(blims(1)),log10(blims(2)),nbins+1));
 else
     b_bins = linspace(blims(1),blims(2),nbins+1);
 end
