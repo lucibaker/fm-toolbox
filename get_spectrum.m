@@ -15,7 +15,7 @@ elseif length(q_fluct) >= 10*2048
 else
     Ldiv = 2^nextpow2(length(q_fluct)/5);
 end
-
+Ldiv=1024;
 % number of divisions 
 Ndiv = floor(2*size(q_fluct,1)/Ldiv) - 1;
 

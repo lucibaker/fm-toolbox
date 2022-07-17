@@ -7,16 +7,16 @@ fontsize = 10;
 lg_fs = 9;
 margin = 0.5;
 intrp = 'latex';  % 'tex'; % 
-% fnt = 'Times';
+fnt = 'Arial';
 
 % axes
 h = findobj(f,'Type','Axes');
 for i = 1:length(h)
     set(h(i),'FontSize',fontsize);
-    set(get(h(i),'xlabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
-    set(get(h(i),'ylabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
-    set(get(h(i),'zlabel'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
-    set(get(h(i),'title'),'FontSize', fontsize, 'Interpreter', intrp); %, 'FontName', fnt);
+    set(get(h(i),'xlabel'),'FontSize', fontsize, 'Interpreter', intrp, 'FontName', fnt);
+    set(get(h(i),'ylabel'),'FontSize', fontsize, 'Interpreter', intrp, 'FontName', fnt);
+    set(get(h(i),'zlabel'),'FontSize', fontsize, 'Interpreter', intrp, 'FontName', fnt);
+    set(get(h(i),'title'),'FontSize', fontsize, 'Interpreter', intrp, 'FontName', fnt);
     set(h(i),'ticklength',2*[0.0100 0.0250]);
     set(h(i),'TickLabelInterpreter',intrp); %, 'FontName', fnt)
     set(h(i),'Box','on');
@@ -26,7 +26,7 @@ end
 % legend
 l = findobj(f,'Type','Legend');
 if ~isempty(l)
-    set(l,'FontSize',lg_fs, 'Interpreter',intrp); %, 'FontName', fnt);
+    set(l,'FontSize',lg_fs, 'Interpreter',intrp, 'FontName', fnt);
 %     legendmarkeradjust(20);
 end
 
@@ -36,7 +36,7 @@ if ~isempty(a)
     ac = get(a,'Children');
     for i = 1:length(ac)
         try
-            set(ac{i},'FontSize',fontsize, 'Interpreter',intrp); %, 'FontName', fnt);
+            set(ac{i},'FontSize',fontsize, 'Interpreter',intrp, 'FontName', fnt);
         catch
         end
     end
@@ -46,8 +46,8 @@ end
 c = findall(f,'Type','ColorBar');
 if ~isempty(c)
     for i = 1:length(c)
-        set(c(i),'FontSize',fontsize,'TickLabelInterpreter',intrp); %, 'FontName', fnt);
-        set(c(i).Label,'Interpreter',intrp,'FontSize',fontsize);
+        set(c(i),'FontSize',fontsize,'TickLabelInterpreter',intrp, 'FontName', fnt);
+        set(c(i).Label,'Interpreter',intrp,'FontSize',fontsize, 'FontName', fnt);
     end
 end
 
