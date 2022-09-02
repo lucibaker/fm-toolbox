@@ -1,8 +1,25 @@
-function [smangles, smangles_cont] = get_smangles(tracks0,kernel,dt,particle_type,Dp)
+function [smangles, smangles_cont] = get_smangles(tracks0,kernel,dt,particle_type,Dp,varargin)
 % compute particle orientations and time derivatives. if length(kernel)>1,
 % returns acceleration variance vs kernel size.
+% inputs:
+% tracks0: unsmoothed tracks (array)
+% kernel: smoothing kernel width (scalar or vector)
+% dt: time interval between frames
+% particle_type: particle type id code (eg r5, d10)
+% Dp: partilce major axis length [m]
+% (d: scaled offset value del_dr or del_lr [m])
+% (K: multiplicative factor for constant offset value ie. K*del_dr0 or K*del_lr0)
 
 %% compute angles
+
+% load rescaling parameters
+if ~isempty(varargin)
+    d = varargin{1};
+    K = varargin{2};
+else
+    d = nan;
+    K = 1;
+end
 
 if strncmp(particle_type,'r',1)
     % Rod angles (from raw tracks)
@@ -10,14 +27,15 @@ if strncmp(particle_type,'r',1)
     lr = tracks0(:,11);
 
     % subtract 1st-percentile l_r, scaled by rod angle
-    [N_lr,edges_lr] = histcounts(lr,200,'Normalization','cdf'); 
+%     [N_lr,edges_lr] = histcounts(lr,200,'Normalization','cdf'); 
 %     del_lr = edges_lr(find(N_lr>.01,1)+1);  %min(lr); % [m]
 %     lr_shifted = max([(lr-del_lr.*(Dp-lr)/(Dp)), zeros(size(lr))],[],2);
 %     del_lr0 = 5e-3; %edges_lr(find(N_lr>.99,1)+1) - Dp;  %min(lr); % [m]
 %     del_lr = mean(tracks0(:,12));
 %     lr_shifted = max([(lr - del_lr0 - del_lr.*(Dp-lr)/(Dp)), zeros(size(lr))],[],2);
-    del_lr0 = mean(tracks0(:,12));
+    del_lr0 = K*mean(tracks0(:,12));
     del_lr = 2.5e-3; % 1e-3;
+    if ~isnan(d); del_lr = d; end %  choose to use d0 if passed in
     lr_shifted = lr - del_lr0;
     lr_shifted = lr_shifted - del_lr.*(Dp-lr_shifted)/Dp;
     
@@ -31,8 +49,8 @@ if strncmp(particle_type,'r',1)
 
     % compute angle cosines
     pxyz = [lr_shifted/(Dp).*cos(th0r), ... % p_x
-    lr_shifted/(Dp).*sin(th0r), ... % p_y
-    sqrt(1 - (lr_shifted/(Dp)).^2)]; % p_z
+    lr_shifted/(Dp).*sin(th0r), ... % p_z
+    sqrt(1 - (lr_shifted/(Dp)).^2)]; % p_y
         
     rir = logical(~imag(pxyz(:,3)) & ~imag(pxyz(:,1))); % real idx, raw
     fprintf('%2.1f%% of raw p-hats real\n',sum(rir)/numel(rir)*100);   
@@ -49,8 +67,9 @@ else
 %     del_dr0 = mean(tracks0(:,12)) - Dp; 
 %     del_dr = 2e-3; %edges_dr(find(N_dr>.01,1)+1);  
 %     dr_shifted = max([(dr - del_dr0 - del_dr.*(Dp-dr)/(Dp)), zeros(size(dr))],[],2);
-    del_dr0 = mean(tracks0(:,12)) - Dp; 
+    del_dr0 = K*mean(tracks0(:,12)) - Dp; 
     del_dr = 0.5e-3; % 0;
+    if ~isnan(d); del_dr = d; end %  choose to use d0 if passed in
     dr_shifted = dr - del_dr0;
     dr_shifted = dr_shifted - del_dr.*(Dp-dr_shifted)/Dp;
     
@@ -65,8 +84,8 @@ else
     
     % compute angle cosines
     pxyz = [sin(th0primer).*sqrt(1 - (dr_shifted/(Dp)).^2), ... % p_x
-        cos(th0primer).*sqrt(1 - (dr_shifted/(Dp)).^2).*-sign(th0primer), ... % p_y
-        dr_shifted/(Dp)]; % p_z
+        cos(th0primer).*sqrt(1 - (dr_shifted/(Dp)).^2).*-sign(th0primer), ... % p_z
+        dr_shifted/(Dp)]; % p_y
     
     rir = logical(~imag(pxyz(:,2)) & ~imag(pxyz(:,1))); % real idx, raw
     fprintf('%2.1f%% of raw p-hats real\n',sum(rir)/numel(rir)*100);
@@ -166,18 +185,17 @@ if length(kernel) == 1
         smangles(:,16) = sum(smangles(:,4:6).^2,2); % sq_tumb_rate
         smangles(:,17) = sum(smangles(:,7:9).^2,2); % sq_tumb_accel
     end
-    
-    % flip angles back to original signs
-    smangles_cont = smangles; % continuous version for autocorrs
-    smangles(:,2) = smangles(:,2).*sign(smangles(:,1));
-    smangles(:,1) = abs(smangles(:,1));   
-
+  
     % remove imaginary and negative p_hats
     imag_remove = logical(imag(smangles(:,1)) | imag(smangles(:,2)) | imag(smangles(:,3)));
     neg_remove = any(smangles(:,[1 3]) < 0, 2);
     fprintf('%2.1f%% of smpx and smpz neg; %2.1f%% of smphats imag\n', sum(neg_remove)/numel(neg_remove)*100, sum(imag_remove)/numel(imag_remove)*100)
-    smangles(imag_remove | neg_remove,:) = nan;
-    smangles_cont(imag_remove | neg_remove,:) = nan;
+    smangles(imag_remove | neg_remove,:) = nan;  
+    
+    % flip angles back to original signs
+    smangles_cont = smangles; % continuous version for autocorrs
+    smangles(:,2) = smangles(:,2).*sign(smangles(:,1));
+    smangles(:,1) = abs(smangles(:,1)); 
 end
 
 end
