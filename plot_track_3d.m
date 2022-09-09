@@ -11,10 +11,10 @@ idx = find(smtracks(:,5)==uid);
 
 smangles(:,1) = abs(smangles(:,1));
 
-% interpolate nan's
-for i = 1:3
-    smangles(idx,i) = naninterp(smangles(idx,i));
-end
+% % interpolate nan's
+% for i = 1:3
+%     smangles(idx,i) = naninterp(smangles(idx,i));
+% end
 
 % subsample track for clarity
 ss = idx(1):5:idx(end);
@@ -68,6 +68,7 @@ for i = 1:length(ss)
             patch(xc',zc',yc',c(ci,:),'edgecolor','none');
 
             % particle shadow
+            surf(xc,side_coord*ones(size(xc))/M,yc,'facecolor',[.7 .7 .7],'edgecolor','none'); hold on
             patch(xc',side_coord*ones(size(xc'))/M,yc',[.7 .7 .7],'edgecolor','none');
 %             patch(xc',zc',bottom_coord*ones(size(xc')),[.7 .7 .7],'edgecolor','none');
         else
