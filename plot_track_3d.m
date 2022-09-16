@@ -9,19 +9,19 @@ function plot_track_3d(smtracks, smangles, uid, particle_type, Rp)
 
 idx = find(smtracks(:,5)==uid);
 
-smangles(:,1) = abs(smangles(:,1));
+% smangles(:,1) = abs(smangles(:,1));
 
-% % interpolate nan's
-% for i = 1:3
-%     smangles(idx,i) = naninterp(smangles(idx,i));
-% end
+% interpolate nan's
+for i = 1:3
+    smangles(idx,i) = naninterp(smangles(idx,i));
+end
 
 % subsample track for clarity
 ss = idx(1):5:idx(end);
 
 % set up color mapping
 % c = parula(length(ss)+1); c = c(1:end-1,:); % color by time
-c = turbo(110); c = c(1:100,:); % color by pz
+c = turbo(100); % color by pz
 
 % dimensions
 M = 1; % scale factor
