@@ -6,6 +6,12 @@ function [q_pdf, q_range] = pdf_var(q, res, scaleflag, varargin)
 % scaleflag: use 'true' for log-scaled bins, 'false' for linear bins
 % qlims: (optional) specify [qmin qmax]
 
+if isempty(q)
+    q_pdf = nan;
+    q_range = nan;
+    return
+end
+
 % define upper and lower bin bounds
 if ~isempty(varargin)
     qlims = varargin{1};
