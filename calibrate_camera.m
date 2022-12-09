@@ -8,6 +8,10 @@ function rectify = calibrate_camera(I,W,order)
 %        2 for quadratic transformation (corrects for camera viewing angle and lens distortion)
 %
 % references: Fujita et al 1998 (Water Res.), Creutin et al 2003 (J. Hydrol.)
+%
+% to use function handle: points_m = rectify(points_px)
+% points_px: set of points in image coordinates (m x 2 vector) [px]
+% points_m: set of points converted to world coordinates (m x 2 vector) [px]
 
 
 % find transformation coefficients

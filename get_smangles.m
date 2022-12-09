@@ -48,9 +48,7 @@ if strncmp(particle_type,'r',1)
     goodplot([4 3.5])
 
     % compute angle cosines
-    pxyz = [lr_shifted/(Dp).*cos(th0r), ... % p_x
-    lr_shifted/(Dp).*sin(th0r), ... % p_z
-    sqrt(1 - (lr_shifted/(Dp)).^2)]; % p_y
+    pxyz = calc_orient(th0r,lr_shifted,Dp,particle_type); % px, pz, py
         
     rir = logical(~imag(pxyz(:,3)) & ~imag(pxyz(:,1))); % real idx, raw
     fprintf('%2.1f%% of raw p-hats real\n',sum(rir)/numel(rir)*100);   
@@ -83,9 +81,7 @@ else
     goodplot([4 3.5])
     
     % compute angle cosines
-    pxyz = [sin(th0primer).*sqrt(1 - (dr_shifted/(Dp)).^2), ... % p_x
-        cos(th0primer).*sqrt(1 - (dr_shifted/(Dp)).^2).*-sign(th0primer), ... % p_z
-        dr_shifted/(Dp)]; % p_y
+    pxyz = calc_orient(th0primer,dr_shifted,Dp,particle_type);  % px, pz, py
     
     rir = logical(~imag(pxyz(:,2)) & ~imag(pxyz(:,1))); % real idx, raw
     fprintf('%2.1f%% of raw p-hats real\n',sum(rir)/numel(rir)*100);
@@ -165,7 +161,7 @@ end
 
 if length(kernel) == 1
     % remove particles whose p_hat vector deviates from unit length (by more than a threshold) 
-    dev_thres = 0.05; % deviation allowed from unit length
+    dev_thres = 0.1; % deviation allowed from unit length
     p_length = sqrt(sum(smangles(:,1:3).^2, 2));
     angle_check_idx1 = logical(abs(1 - p_length) > dev_thres);
     smangles(angle_check_idx1,:) = nan; 
@@ -186,16 +182,19 @@ if length(kernel) == 1
         smangles(:,17) = sum(smangles(:,7:9).^2,2); % sq_tumb_accel
     end
   
-    % remove imaginary and negative p_hats
-    imag_remove = logical(imag(smangles(:,1)) | imag(smangles(:,2)) | imag(smangles(:,3)));
-    neg_remove = any(smangles(:,[1 3]) < 0, 2);
-    fprintf('%2.1f%% of smpx and smpz neg; %2.1f%% of smphats imag\n', sum(neg_remove)/numel(neg_remove)*100, sum(imag_remove)/numel(imag_remove)*100)
-    smangles(imag_remove | neg_remove,:) = nan;  
-    
+    %%% removing negatives before flipping back to original signs? wrong
+    %%% order
     % flip angles back to original signs
     smangles_cont = smangles; % continuous version for autocorrs
     smangles(:,2) = smangles(:,2).*sign(smangles(:,1));
-    smangles(:,1) = abs(smangles(:,1)); 
+    smangles(:,1) = abs(smangles(:,1));
+
+    % remove imaginary and negative p_hats
+    imag_remove = logical(imag(smangles(:,1)) | imag(smangles(:,2)) | imag(smangles(:,3)));
+    neg_remove = any(smangles(:,[1 3]) < 0, 2);
+    fprintf('%2.1f%% of smpx and smpy neg; %2.1f%% of smphats imag\n', sum(neg_remove)/numel(neg_remove)*100, sum(imag_remove)/numel(imag_remove)*100)
+    smangles(imag_remove | neg_remove,:) = nan;
+    smangles_cont(imag_remove | neg_remove,:) = nan;
 end
 
 end
