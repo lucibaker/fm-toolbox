@@ -3,7 +3,7 @@ function goodplot(papersize)
 % and sets up the page for nice printing
 f = gcf;
 
-fontsize = 10; 
+fontsize = 14; 
 lg_fs = 9;
 margin = 0.5;
 intrp = 'latex';  % 'tex'; % 
