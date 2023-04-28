@@ -1,7 +1,8 @@
 % DEMO for calibrate_camera.m
 
 % calibrate the cameras
-load('calib_data_C.mat')  % contains coordinates of calibration points in image coordinates (I matrix) and world coordinates (W matrix)
+load('calib_data_C.mat')  % contains coordinates of calibration points in image coordinates (I matrix) and world coordinates (W matrix) 
+    % (note: this is the calibration data from the WASIRF experiment)
 rectify = calibrate_camera(I,W,2);  % get image-to-world transformation function
 
 % get particle positions in world coordinates
