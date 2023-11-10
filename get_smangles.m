@@ -48,7 +48,7 @@ if strncmp(particle_type,'r',1)
     goodplot([4 3.5])
 
     % compute angle cosines
-    pxyz = calc_orient(th0r,lr_shifted,Dp,particle_type); % px, pz, py
+    pxyz = calc_orient(th0r,lr_shifted,Dp,particle_type); % px, pz, py (ocean coords)
         
     rir = logical(~imag(pxyz(:,3)) & ~imag(pxyz(:,1))); % real idx, raw
     fprintf('%2.1f%% of raw p-hats real\n',sum(rir)/numel(rir)*100);   
